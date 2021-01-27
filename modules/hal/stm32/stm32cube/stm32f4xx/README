@@ -1,0 +1,54 @@
+STM32CubeF4
+###########
+
+Origin:
+   ST Microelectronics
+   http://www.st.com/en/embedded-software/stm32cubef4.html
+
+Status:
+   version v1.25.0
+
+Purpose:
+   ST Microelectronics official MCU package for STM32F4 series.
+
+Description:
+   This package is an extract of official STM32CubeF4 package written by ST Microelectronics.
+   It is composed of STM32Cube hardware abstraction layer (HAL) and low layer (LL) plus a set
+   of CMSIS headers files, one for each SoC in STM32F4 series.
+
+Dependencies:
+    None.
+
+URL:
+   https://github.com/STMicroelectronics/STM32CubeF4
+
+Commit:
+   a86ecaa2fb63029596ba7dabadab2d9c2c139560
+
+Maintained-by:
+   External
+
+License:
+   BSD-3-Clause
+
+License Link:
+   https://opensource.org/licenses/BSD-3-Clause
+
+Patch List:
+   See release_note.html from STM32Cube
+
+    *Extend public SetFlashLatency API to all families
+     The LL_SetFlashLatency public API is now defined for families
+     beyond G4, L4 and L5. The private function has been made public.
+    Impacted files:
+     drivers/include/stm32f4xx_ll_utils.h
+     drivers/src/stm32f4xx_ll_utils.c
+    ST Bug tracker ID: 76121
+
+   *Disable i2c HAL
+     Due to conflict with zephyr i2c.h (I2C_SPEED_STANDARD and I2C_SPEED_FAST
+     redefinition), deactivate STM32Cube I2C HAL. This raises no issue since
+     LL API is currently used for stm32 I2C driver.
+    Impacted files:
+     drivers/include/stm32f4xx_hal_conf.h
+    ST Bug tracker ID: NA. Not a stm32cube issue

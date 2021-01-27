@@ -1,0 +1,5 @@
+erase
+loadfile ./build/zephyr/zephyr.hex
+r
+g
+qc

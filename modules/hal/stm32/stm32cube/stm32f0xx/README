@@ -1,0 +1,47 @@
+STM32CubeF0
+###########
+
+Origin:
+   ST Microelectronics
+   http://www.st.com/en/embedded-software/stm32cubef0.html
+
+Status:
+   version v1.11.0
+
+Purpose:
+   ST Microelectronics official MCU package for STM32F0 series.
+
+Description:
+   This package is an extract of official STM32CubeF0 package written by ST Microelectronics.
+   It is composed of STM32Cube hardware abstraction layer (HAL) and low layer (LL) plus a set
+   of CMSIS headers files, one for each SoC in STM32F0 series.
+
+Dependencies:
+    None.
+
+URL:
+   https://github.com/STMicroelectronics/STM32CubeF0
+
+Commit:
+   568c7255f77258c12ac876745f53ce76a682259f
+
+Maintained-by:
+   External
+
+License:
+   BSD-3-Clause
+
+License Link:
+   https://opensource.org/licenses/BSD-3-Clause
+
+Patch List:
+
+    *Extend public SetFlashLatency API to all families
+     The LL_SetFlashLatency public API is now defined for families
+     beyond G4, L4 and L5. The private function has been made public.
+    Impacted files:
+     drivers/include/stm32f0xx_ll_utils.h
+     drivers/src/stm32f0xx_ll_utils.c
+    ST Bug tracker ID: 76117
+
+   See release_note.html from STM32Cube
