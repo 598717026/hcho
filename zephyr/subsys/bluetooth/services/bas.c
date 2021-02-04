@@ -45,6 +45,7 @@ static ssize_t read_blvl(struct bt_conn *conn,
 {
 	uint16_t lvl8 = battery_level;
 
+	printk("read_blvl %d\n", battery_level);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &lvl8,
 				 sizeof(lvl8));
 }
@@ -75,9 +76,11 @@ int bt_bas_set_battery_level(uint16_t level)
 {
 	int rc;
 
-	if (level > 1000U) {
+	/*if (level > 1000U) {
 		return -EINVAL;
-	}
+	}*/
+
+	//printk("bt_bas_set_battery_level %d\n", level);
 
 	battery_level = level;
 

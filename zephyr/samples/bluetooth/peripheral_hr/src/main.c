@@ -69,10 +69,12 @@ struct bt_conn *default_conn;
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
-		      BT_UUID_16_ENCODE(BT_UUID_HRS_VAL),
+	BT_DATA_BYTES(
+		BT_DATA_UUID16_ALL,
+	//	      BT_UUID_16_ENCODE(BT_UUID_HRS_VAL),
 		      BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
-		      BT_UUID_16_ENCODE(BT_UUID_DIS_VAL))
+	//	      BT_UUID_16_ENCODE(BT_UUID_DIS_VAL)
+			  )
 };
 
 
@@ -144,7 +146,7 @@ static void bas_notify(void)
 //	printk("bas_notify %d %08x\n", battery_level, battery_level);
 //	bt_bas_set_battery_level(battery_level);
 	
-	//printk("bas_notify %d %08x\n", m_sample_buffer[0], m_sample_buffer[0]);
+//	printk("bas_notify %d %08x\n", m_adc_sample, m_adc_sample);
 	uint16_t c;
 	uint16_t ppb;
 	sampleToV(m_adc_sample, &c, &ppb);
@@ -280,26 +282,64 @@ static K_THREAD_STACK_DEFINE(adc_thread_stack, 320);
  *               不易消除由于脉冲干扰所引起的采样值偏差，
  *               不适用于脉冲干扰比较严重的场合，比较浪费ram
 */
-#define	N	12
+#define	N	96
 
 uint16_t adc_filter(uint16_t s)
 {
     int count;
-    int sum = 0;
+    uint32_t sum = 0;
+	uint16_t value_sbuf[N] = {0};
 	static uint16_t value_buf[N] = {0};
 	static uint16_t i = 0;
  
+//	printk("adc_filter %08x\n", s);
+	if (s & 0x8000)
+	{
+		s = 0;
+	}
     value_buf[i++] = s;
 	//printk("ADC %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", value_buf[0], value_buf[1], value_buf[2], value_buf[3], value_buf[4], value_buf[5], value_buf[6], value_buf[7], value_buf[8], value_buf[9], value_buf[10], value_buf[11]);
     if ( i >= N )
     {
         i = 0;
     }
+
+#if 0
+
+    for (count = 0; count < N; count++)
+    {
+        value_sbuf[count] = value_buf[count];
+    }
+	
+	for(int i = 0; i < N - 1; i++)
+	{
+		for(int j = i + 1; j < N; j++)
+		{
+			if(value_sbuf[i] > value_sbuf[j])
+			{
+				int temp = value_sbuf[i];
+				value_sbuf[i] = value_sbuf[j];
+				value_sbuf[j] = temp;
+			}
+		}
+	}
+	//printk("ADC %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", value_sbuf[0], value_sbuf[1], value_sbuf[2], value_sbuf[3], value_sbuf[4], value_sbuf[5], value_sbuf[6], value_sbuf[7], value_sbuf[8], value_sbuf[9], value_sbuf[10], value_sbuf[11]);
+
+    for (count = N / 8; count < N - N / 8; count++)
+    {
+        sum += value_sbuf[count];
+    }
+    return (uint16_t)(sum / (N - N / 8 - N / 8));
+
+#else
+
     for (count = 0; count < N; count++)
     {
         sum += value_buf[count];
     }
     return (uint16_t)(sum / N);
+
+#endif
 }
 
 void modulate_adc(void *p1, void *p2, void *p3)
@@ -324,7 +364,7 @@ void modulate_adc(void *p1, void *p2, void *p3)
 			m_adc_sample = adc_filter(m_sample_buffer[0]);
 			//printk("adc %d, %d\n", m_adc_sample, m_sample_buffer[0]);
 		}
-		k_sleep(K_MSEC(100));
+		k_sleep(K_MSEC(200));
 	}
 }
 
@@ -606,12 +646,15 @@ void sampleToV(uint16_t s, uint16_t *c, uint16_t *ppb)
 	uint16_t samplezv = samplez[0] * 256 + samplez[1];
 	uint16_t samplehv = sampleh[0] * 256 + sampleh[1];
 
+	//printk("sampleToV\n");
 	if (0 == (ppbhv - ppbzv))
 	{
+	//	printk("sampleToV0\n");
 		*ppb = s;
 	}
 	else
 	{
+	//	printk("sampleToV1\n");
 		*ppb = (uint32_t)(s - ppbzv) * (samplehv - samplezv) / (ppbhv - ppbzv) + ppbzv;
 	}
 

@@ -1,2 +1,2 @@
-pyocd-flashtool.exe -t nrf52 -se E:\works\zephyrproject\zephyr\build\zephyr\zephyr.hex
+pyocd-flashtool.exe -t nrf52 -se build\zephyr\zephyr.hex
 pause
