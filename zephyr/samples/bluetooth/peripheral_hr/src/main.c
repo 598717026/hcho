@@ -22,6 +22,9 @@
 #include <bluetooth/services/bas.h>
 #include <bluetooth/services/hrs.h>
 
+
+#define	ZERO_ADC_V		184
+
 void sampleToV(uint16_t s, uint16_t *c, uint16_t *ppb);
 void autoUpLoadV();
 
@@ -293,6 +296,7 @@ uint16_t adc_filter(uint16_t s)
 	static uint16_t i = 0;
  
 //	printk("adc_filter %08x\n", s);
+	s += ZERO_ADC_V;
 	if (s & 0x8000)
 	{
 		s = 0;
@@ -655,7 +659,7 @@ void sampleToV(uint16_t s, uint16_t *c, uint16_t *ppb)
 	else
 	{
 	//	printk("sampleToV1\n");
-		*ppb = (uint32_t)(s - ppbzv) * (samplehv - samplezv) / (ppbhv - ppbzv) + ppbzv;
+		*ppb = (uint32_t)((float)(s - samplezv) * (ppbhv - ppbzv) / (samplehv - samplezv) + ppbzv);
 	}
 
 	*c = *ppb * 1.23;
@@ -1248,12 +1252,7 @@ void i2c_main(void)
 void main(void)
 {
 	printk("Bluetooth main\n");
-
-	{
-		uint16_t c = 29;
-		uint16_t ppb = c * 22.4 / 30.03;
-		printk("ppb test %d %d\n", c, ppb);
-	}
+	
 #if 1
 	int err;
 
