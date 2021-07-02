@@ -1,6 +1,6 @@
 @echo off
 ::读取path环境变量到自定义变量中
-set PATH=%PATH%;"D:\Program Files (x86)\SEGGER\JLink_V512f"
+set PATH=%PATH%;"c:\Program Files (x86)\SEGGER\JLink"
 set remain=%path%
 set jlinkpath="JLink"
 echo download hex file ...
