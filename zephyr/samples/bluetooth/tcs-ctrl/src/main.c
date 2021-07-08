@@ -42,6 +42,10 @@ static ssize_t recv(struct bt_conn *conn,
 		    const struct bt_gatt_attr *attr, const void *buf,
 		    uint16_t len, uint16_t offset, uint8_t flags);
 
+static ssize_t read_tx(struct bt_conn *conn,
+			     const struct bt_gatt_attr *attr,
+			     void *buf, uint16_t len, uint16_t offset);
+
 /* ST Custom Service  */
 static struct bt_uuid_128 st_service_uuid = BT_UUID_INIT_128(
 	0x8f, 0xe5, 0xb3, 0xd5, 0x2e, 0x7f, 0x4a, 0x98,
@@ -105,7 +109,7 @@ BT_GATT_SERVICE_DEFINE(stsensor_svc,
 BT_GATT_PRIMARY_SERVICE(&st_service_uuid),
 BT_GATT_CHARACTERISTIC(&led_char_uuid.uuid,
 		       BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
-		       BT_GATT_PERM_WRITE, NULL, recv, (void *)1),
+		       BT_GATT_PERM_READ | BT_GATT_PERM_WRITE, read_tx, recv, (void *)1),
 BT_GATT_CHARACTERISTIC(&but_notif_uuid.uuid, BT_GATT_CHRC_NOTIFY,
 		       BT_GATT_PERM_READ, NULL, NULL, &but_val),
 BT_GATT_CCC(mpu_ccc_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
@@ -125,7 +129,25 @@ static ssize_t recv(struct bt_conn *conn,
 		led_on_off(led_state);
 	}
 
+	printk("recv:");
+	for (size_t i = 0; i < len; i++)
+	{
+		/* code */
+		printk(" %02x ", ((char *)buf)[i]);
+	}
+	printk("\n");
+
 	return 0;
+}
+
+static ssize_t read_tx(struct bt_conn *conn,
+			     const struct bt_gatt_attr *attr,
+			     void *buf, uint16_t len, uint16_t offset)
+{
+	char buff[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, buff,
+				 sizeof(buff));
 }
 
 static void bt_ready(int err)
