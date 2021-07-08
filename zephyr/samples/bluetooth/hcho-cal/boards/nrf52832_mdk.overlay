@@ -1,0 +1,8 @@
+
+&uart0 {
+	current-speed = <115200>;
+	tx-pin = <24>;
+	rx-pin = <23>;
+//	tx-pin = <20>;
+//	rx-pin = <19>;
+};
