@@ -838,11 +838,11 @@ static ssize_t recv(struct bt_conn *conn,
 		    const struct bt_gatt_attr *attr, const void *buf,
 		    uint16_t len, uint16_t offset, uint8_t flags)
 {
-	printk("recv:");
+	//printk("recv:");
 	for (size_t i = 0; i < len; i++)
 	{
 		/* code */
-		printk(" %02x ", ((char *)buf)[i]);
+		//printk(" %02x ", ((char *)buf)[i]);
 	}
 	if (len == 14)
 	{
@@ -856,7 +856,7 @@ static ssize_t recv(struct bt_conn *conn,
 		m_hcho_ppb = ((int16_t *) buf)[1];
 	}
 
-	printk("\n");
+	//printk("\n");
 
 	return 0;
 }
@@ -923,7 +923,6 @@ void main(void)
 {
 	printk("Bluetooth main\n");
 	
-#if 1
 	int err;
 
 	bt_conn_cb_register(&conn_callbacks);
@@ -934,6 +933,7 @@ void main(void)
 		LOG_ERR("Bluetooth init failed (err %d)", err);
 	}
 
+#if 0
 	{
 		k_thread_create(&settingsUpdate_thread_data, settingsUpdate_thread_stack,
 			K_THREAD_STACK_SIZEOF(settingsUpdate_thread_stack),
