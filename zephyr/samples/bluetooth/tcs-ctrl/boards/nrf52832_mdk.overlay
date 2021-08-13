@@ -26,3 +26,20 @@
 	tx-pin = <20>;
 	rx-pin = <19>;
 };
+
+
+/*&leds {
+	//compatible = "gpio-leds";
+	IOVDD: vdds_0 {
+		gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+		label = "IOVDD";
+	};
+	AVDD: vdds_1 {
+		gpios = <&gpio0 14 GPIO_ACTIVE_HIGH>;
+		label = "AVDD";
+	};
+	VM: vdds_2 {
+		gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
+		label = "VM";
+	};
+};*/

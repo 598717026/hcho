@@ -24,6 +24,7 @@
 #include <bluetooth/gatt.h>
 #include "button_svc.h"
 #include "led_svc.h"
+#include <drivers/i2c.h>
 
 LOG_MODULE_REGISTER(main);
 
@@ -194,6 +195,119 @@ static struct bt_conn_cb conn_callbacks = {
 	.disconnected = disconnected,
 };
 
+#define XY_I2C_ADDR	0x2d
+
+#define Z_I2C_ADDR	0x2d
+
+
+int i2c_WriteRegXy(uint16_t reg, uint8_t *data, uint32_t num_bytes)
+{
+	uint8_t adata[50 + 2];
+
+	if (num_bytes > 50)
+	{
+		return -1;
+	}
+
+	adata[0] = ((uint8_t *) &reg)[0];
+	adata[1] = ((uint8_t *) &reg)[1];
+
+	int i;
+	for (i = 0;i < num_bytes; i++)
+	{
+		adata[i + 2] = data[i];
+	}
+
+	struct i2c_msg msgs[1];
+
+	/* Data to be written, and STOP after this. */
+	msgs[0].buf = adata;
+	msgs[0].len = num_bytes;
+	msgs[0].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
+
+	return i2c_transfer(i2c1_dev, &msgs[0], 1, XY_I2C_ADDR);
+}
+
+int i2c_WriteRegZ(uint16_t reg, uint8_t *data, uint32_t num_bytes)
+{
+	uint8_t adata[50 + 2];
+
+	if (num_bytes > 50)
+	{
+		return -1;
+	}
+
+	adata[0] = ((uint8_t *) &reg)[0];
+	adata[1] = ((uint8_t *) &reg)[1];
+
+	int i;
+	for (i = 0;i < num_bytes; i++)
+	{
+		adata[i + 2] = data[i];
+	}
+
+	struct i2c_msg msgs[1];
+
+	/* Data to be written, and STOP after this. */
+	msgs[0].buf = adata;
+	msgs[0].len = num_bytes;
+	msgs[0].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
+
+	return i2c_transfer(i2c0_dev, &msgs[0], 1, XY_I2C_ADDR);
+}
+
+int i2c_ReadRegXy(uint16_t reg, uint8_t *data, uint32_t num_bytes)
+{
+	uint8_t wr_addr[2];
+	struct i2c_msg msgs[2];
+
+	/* Now try to read back from FRAM */
+
+	/* FRAM address */
+	wr_addr[0] = (reg >> 8) & 0xFF;
+	wr_addr[1] = reg & 0xFF;
+
+	/* Setup I2C messages */
+
+	/* Send the address to read from */
+	msgs[0].buf = wr_addr;
+	msgs[0].len = 2U;
+	msgs[0].flags = I2C_MSG_WRITE;
+
+	/* Read from device. STOP after this. */
+	msgs[1].buf = data;
+	msgs[1].len = num_bytes;
+	msgs[1].flags = I2C_MSG_READ | I2C_MSG_STOP;
+
+	return i2c_transfer(i2c1_dev, &msgs[0], 2, XY_I2C_ADDR);
+}
+
+int i2c_ReadRegZ(uint16_t reg, uint8_t *data, uint32_t num_bytes)
+{
+	uint8_t wr_addr[2];
+	struct i2c_msg msgs[2];
+
+	/* Now try to read back from FRAM */
+
+	/* FRAM address */
+	wr_addr[0] = (reg >> 8) & 0xFF;
+	wr_addr[1] = reg & 0xFF;
+
+	/* Setup I2C messages */
+
+	/* Send the address to read from */
+	msgs[0].buf = wr_addr;
+	msgs[0].len = 2U;
+	msgs[0].flags = I2C_MSG_WRITE;
+
+	/* Read from device. STOP after this. */
+	msgs[1].buf = data;
+	msgs[1].len = num_bytes;
+	msgs[1].flags = I2C_MSG_READ | I2C_MSG_STOP;
+
+	return i2c_transfer(i2c0_dev, &msgs[0], 2, Z_I2C_ADDR);
+}
+
 int i2c_init()
 {
 	
@@ -206,11 +320,220 @@ int i2c_init()
 	return 0;
 }
 
+int ois_off()
+{
+	int err;
+	uint8_t data[] = {0x00};
+
+	printk("ois_off\n");
+
+	err = i2c_WriteRegXy(0x0001 , data, 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+#if 0
+	err = i2c_WriteRegZ(0x0001 , data, 1);
+	if (err)
+	{
+		printk("i2c_WriteRegZ err:%d\n", err);
+		return err;
+	}
+#endif 
+
+	return err;
+}
+
+int ois_on()
+{
+	int err;
+	uint8_t data[] = {0x01};
+
+	printk("ois_on\n");
+
+	err = i2c_WriteRegXy(0xf300 , data, 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+#if 0
+	err = i2c_WriteRegZ(0xf300 , data, 1);
+	if (err)
+	{
+		printk("i2c_WriteRegZ err:%d\n", err);
+		return err;
+	}
+#endif
+
+	return err;
+}
+
+// 移动x轴 （-1200  -   1200）
+int move_x(float s)
+{
+	int err;
+
+	printk("move_x\n");
+
+	// 寄存器 0xf304～0xf307 为小端，配置数据为float   
+
+	err = i2c_WriteRegXy(0xf304 , ((uint8_t *) &s)[0], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+	err = i2c_WriteRegXy(0xf305 , ((uint8_t *) &s)[1], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+	err = i2c_WriteRegXy(0xf306 , ((uint8_t *) &s)[2], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+	err = i2c_WriteRegXy(0xf307 , ((uint8_t *) &s)[3], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+	return err;
+}
+
+// 移动y轴 （-1200  -   1200）
+int move_y(float s)
+{
+	int err;
+	
+	printk("move_y\n");
+
+	// 寄存器 0xf304～0xf307 为小端，配置数据为float   
+
+	err = i2c_WriteRegXy(0xf308 , ((uint8_t *) &s)[0], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+	err = i2c_WriteRegXy(0xf309 , ((uint8_t *) &s)[1], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+	err = i2c_WriteRegXy(0xf30a , ((uint8_t *) &s)[2], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+
+	err = i2c_WriteRegXy(0xf30b , ((uint8_t *) &s)[3], 1);
+	if (err)
+	{
+		printk("i2c_WriteRegXy err:%d\n", err);
+		return err;
+	}
+	return err;
+}
+
+
+#define IODD_PORT 	15
+#define AVDD_PORT 	14
+#define VM_PORT 	13
+
+#define GPIO_DRV_NAME DT_LABEL(DT_NODELABEL(gpio0))
+
+#define GPIO_NAME			"GPIO_"
+
+#define GPIO_PIN_WR(dev, pin, bit)						\
+	do {									\
+		if (gpio_pin_set_raw((dev), (pin), (bit))) {			\
+			printk("Err set " GPIO_NAME "%d! %x\n", (pin), (bit));	\
+		}								\
+	} while (0)								\
+
+
+#define GPIO_PIN_CFG(dev, pin, dir)						\
+	do {									\
+		if (gpio_pin_configure((dev), (pin), (dir))) {			\
+			printk("Err cfg " GPIO_NAME "%d! %x\n", (pin), (dir));	\
+		}								\
+	} while (0)
+
+int tcsPowerOn()
+{
+	int ret = 0;
+	const struct device *gpio_dev;
+
+	gpio_dev = device_get_binding(GPIO_DRV_NAME);
+	if (!gpio_dev) {
+		return (-EOPNOTSUPP);
+	}
+
+	//while (1)
+	{
+		/* code */
+	/* Set LED pin as output */
+
+	GPIO_PIN_CFG(gpio_dev, IODD_PORT, GPIO_OUTPUT);
+	GPIO_PIN_CFG(gpio_dev, AVDD_PORT, GPIO_OUTPUT);
+	GPIO_PIN_CFG(gpio_dev, VM_PORT, GPIO_OUTPUT);
+
+	GPIO_PIN_WR(gpio_dev, IODD_PORT, 0);
+	GPIO_PIN_WR(gpio_dev, AVDD_PORT, 0);
+	GPIO_PIN_WR(gpio_dev, VM_PORT, 0);
+
+	k_sleep(K_MSEC(300));
+
+	GPIO_PIN_WR(gpio_dev, AVDD_PORT, 1);
+	k_sleep(K_MSEC(10));
+	GPIO_PIN_WR(gpio_dev, IODD_PORT, 1);
+	k_sleep(K_MSEC(10));
+	GPIO_PIN_WR(gpio_dev, VM_PORT, 1);
+
+	k_sleep(K_SECONDS(1));
+	}
+	
+	return ret;
+}
+
+
 void main(void)
 {
 	int err;
 
 	err = i2c_init();
+	if (err) {
+		return;
+	}
+
+
+	err = tcsPowerOn();
+	if (err) {
+		return;
+	}
+
+	//while(1)
+	err = ois_off();
+	if (err) {
+		return;
+	}
+
+	err = ois_on();
 	if (err) {
 		return;
 	}
@@ -231,4 +554,5 @@ void main(void)
 	if (err) {
 		LOG_ERR("Bluetooth init failed (err %d)", err);
 	}
+	
 }
